@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String    @id @default(cuid())
+  githubId    Int       @unique
+  username    String    @unique
+  name        String?
+  email       String?   @unique
+  avatarUrl   String
+  bio         String?
+  accessToken String?
+  createdAt   DateTime  @default(now())
+  lastSynced  DateTime?
+
+  cards     Card[]
+  likes     CardLike[]
+  templates Template[]
+
+  @@map("users")
+}
+
+model Card {
+  id                String   @id @default(cuid())
+  userId            String
+  title             String   @default("My Developer Card")
+  themeName         String   @default("minimalist")
+  customColors      Json     @default("{}")
+  enabledComponents Json     @default("{}")
+  layoutConfig      Json     @default("{}")
+  imageUrl          String?
+  isPublic          Boolean  @default(true)
+  viewCount         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes CardLike[]
+
+  @@map("cards")
+}
+
+model CardLike {
+  id        String   @id @default(cuid())
+  cardId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, userId])
+  @@map("card_likes")
+}
+
+model Template {
+  id            String   @id @default(cuid())
+  creatorId     String
+  name          String
+  description   String?
+  themeConfig   Json
+  downloadCount Int      @default(0)
+  isFeatured    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  creator User @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@map("templates")
+}
