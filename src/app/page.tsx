@@ -56,7 +56,8 @@ const ACCENT_CLASSES: Record<string, { icon: string; glow: string; border: strin
   pink:   { icon: "text-pink-400",   glow: "shadow-pink-500/20",  border: "border-pink-500/20",  bg: "bg-pink-500/10" },
 };
 
-const mockData = getMockGitHubData();
+// Initialized inside the component after mount to avoid SSR/client mismatch
+// (getMockGitHubData uses Math.random() and new Date())
 
 /* ─── Floating Particle ──────────────────────────────────── */
 function Particle({ style }: { style: React.CSSProperties }) {
@@ -130,8 +131,11 @@ function GridBackground() {
 }
 
 /* ─── 3D Demo Card ───────────────────────────────────────── */
-function DemoCard3D({ config, delay, floatClass, rotateY = 0 }: {
-  config: CardConfig; delay: number; floatClass: string; rotateY?: number;
+function DemoCard3D({ config, data, delay, floatClass }: {
+  config: CardConfig;
+  data: ReturnType<typeof getMockGitHubData>;
+  delay: number;
+  floatClass: string;
 }) {
   const scale = 0.24;
   const w = config.layout.width * scale;
@@ -159,7 +163,7 @@ function DemoCard3D({ config, delay, floatClass, rotateY = 0 }: {
       <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 z-10 pointer-events-none" />
       {/* Card */}
       <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/60 z-20">
-        <CardCanvas data={mockData} config={config} previewScale={scale} />
+        <CardCanvas data={data} config={config} previewScale={scale} />
       </div>
     </motion.div>
   );
@@ -286,8 +290,14 @@ export default function LandingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  // Generate mock data client-side only to avoid SSR/hydration mismatch
+  // (getMockGitHubData uses Math.random() + new Date())
+  const [mockData, setMockData] = useState<ReturnType<typeof getMockGitHubData> | null>(null);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    setMockData(getMockGitHubData());
+  }, []);
   useEffect(() => {
     if (session) router.push("/dashboard");
   }, [session, router]);
@@ -383,18 +393,20 @@ export default function LandingPage() {
           ))}
         </motion.div>
 
-        {/* 3D Demo Cards */}
-        <div className="mt-24 flex items-center gap-6 md:gap-10">
-          {DEMO_CONFIGS.map((cfg, i) => (
-            <DemoCard3D
-              key={cfg.theme}
-              config={cfg}
-              delay={0.4 + i * 0.12}
-              floatClass={i === 0 ? "animate-float" : i === 1 ? "animate-float-slow" : "animate-float-reverse"}
-              rotateY={i === 0 ? -5 : i === 2 ? 5 : 0}
-            />
-          ))}
-        </div>
+        {/* 3D Demo Cards — client-only to avoid hydration mismatch */}
+        {mockData && (
+          <div className="mt-24 flex items-center gap-6 md:gap-10">
+            {DEMO_CONFIGS.map((cfg, i) => (
+              <DemoCard3D
+                key={cfg.theme}
+                config={cfg}
+                data={mockData}
+                delay={0.4 + i * 0.12}
+                floatClass={i === 0 ? "animate-float" : i === 1 ? "animate-float-slow" : "animate-float-reverse"}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Bottom gradient fade */}
         <div className="absolute bottom-0 inset-x-0 h-40 pointer-events-none"
