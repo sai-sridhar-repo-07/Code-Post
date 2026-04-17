@@ -196,7 +196,7 @@ function SkeletonCard({ i }: { i: number }) {
       transition={{ delay: i * 0.04 }}
       className="rounded-2xl overflow-hidden border border-white/8"
     >
-      <div className="h-48 animate-shimmer bg-white/3" />
+      <div className="h-48 shimmer" style={{ background: "rgba(255,255,255,0.03)" }} />
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-white/5 animate-pulse" />

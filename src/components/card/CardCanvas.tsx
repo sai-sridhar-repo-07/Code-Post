@@ -516,6 +516,9 @@ export function CardCanvas({ data, config, previewScale = 1, id = "card-canvas" 
 
   const { colors } = theme;
 
+  const visualWidth  = config.layout.width  * previewScale;
+  const visualHeight = config.layout.height * previewScale;
+
   const cardStyle = {
     width: `${config.layout.width}px`,
     height: `${config.layout.height}px`,
@@ -544,8 +547,10 @@ export function CardCanvas({ data, config, previewScale = 1, id = "card-canvas" 
   };
 
   return (
-    <div id={id} style={cardStyle} className="card-canvas">
-      {renderContent()}
+    <div style={{ width: visualWidth, height: visualHeight, overflow: "hidden", position: "relative", flexShrink: 0 }}>
+      <div id={id} style={cardStyle} className="card-canvas">
+        {renderContent()}
+      </div>
     </div>
   );
 }

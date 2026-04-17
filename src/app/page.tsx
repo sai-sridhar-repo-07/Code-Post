@@ -132,7 +132,7 @@ function DemoCard({ config, data, floatClass, delay }: {
       />
       <div
         className="relative rounded-2xl overflow-hidden z-[15]"
-        style={{ boxShadow: `0 30px 80px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.07)` }}
+        style={{ width: w, height: h, boxShadow: `0 30px 80px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.07)` }}
       >
         <CardCanvas data={data} config={config} previewScale={scale} />
       </div>

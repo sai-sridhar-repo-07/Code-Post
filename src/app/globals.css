@@ -29,7 +29,6 @@ body {
   font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  perspective: 1200px;
 }
 
 /* ── Scrollbar ─────────────────────────────── */
@@ -211,11 +210,20 @@ body {
 }
 
 /* ── Gradient text ─────────────────────────── */
-.grad {
+.grad,
+.gradient-text-blue-violet {
   background: linear-gradient(135deg,#38bdf8,#818cf8,#c084fc);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+/* ── Glass card alias ──────────────────────── */
+.glass-card {
+  background: rgba(255,255,255,.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.07);
 }
 .grad-warm {
   background: linear-gradient(135deg,#f59e0b,#ec4899,#8b5cf6);

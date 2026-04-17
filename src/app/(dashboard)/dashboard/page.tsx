@@ -330,7 +330,7 @@ export default function DashboardPage() {
               {/* Card surface */}
               <div
                 className="relative rounded-2xl overflow-hidden shadow-3d-lg ring-1 ring-white/10"
-                style={{ transform: "translateZ(0)" }}
+                style={{ width: cardWidth, height: cardHeight, transform: "translateZ(0)" }}
               >
                 <CardCanvas
                   data={githubData}
