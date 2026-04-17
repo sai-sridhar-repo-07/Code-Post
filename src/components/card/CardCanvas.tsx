@@ -6,6 +6,8 @@ import { ContributionHeatmap } from "./ContributionHeatmap";
 import { StatsOverview } from "./StatsOverview";
 import { TechStack } from "./TechStack";
 import { TopProjects } from "./TopProjects";
+import { Badges } from "./Badges";
+import { QRCodeCard } from "./QRCodeCard";
 import { getTheme } from "@/lib/themes";
 import type { GitHubData, CardConfig, Theme } from "@/types";
 
@@ -81,6 +83,15 @@ function CyberpunkCard({ data, theme, config }: { data: GitHubData; theme: Theme
         )}
       </div>
 
+      {config.enabledComponents.badges && (
+        <div className="mt-3">
+          <p className="text-[9px] mb-1.5 font-mono opacity-60" style={{ color: colors.primary }}>
+            ▶ ACHIEVEMENTS
+          </p>
+          <Badges stats={data.stats} theme={theme} />
+        </div>
+      )}
+
       {config.enabledComponents.quote && (
         <div
           className="mt-4 p-3 text-center"
@@ -89,6 +100,16 @@ function CyberpunkCard({ data, theme, config }: { data: GitHubData; theme: Theme
           <p className="text-xs italic" style={{ color: colors.primary, fontFamily: fonts.mono }}>
             &ldquo;{config.quote}&rdquo;
           </p>
+        </div>
+      )}
+
+      {config.enabledComponents.qrCode && (
+        <div className="mt-3 flex items-center gap-3">
+          <QRCodeCard url={data.user.html_url} theme={theme} size={48} />
+          <div>
+            <p className="text-[9px] font-mono opacity-60" style={{ color: colors.primary }}>▶ GITHUB PROFILE</p>
+            <p className="text-[10px] font-mono" style={{ color: colors.primary }}>{data.user.html_url.replace("https://", "")}</p>
+          </div>
         </div>
       )}
 
@@ -147,11 +168,29 @@ function MinimalistCard({ data, theme, config }: { data: GitHubData; theme: Them
         )}
       </div>
 
+      {config.enabledComponents.badges && (
+        <div className="mt-4">
+          <p className="text-[10px] font-medium mb-2 uppercase tracking-widest" style={{ color: colors.textSecondary }}>
+            Achievements
+          </p>
+          <Badges stats={data.stats} theme={theme} />
+        </div>
+      )}
+
       {config.enabledComponents.quote && (
         <div className="mt-6">
           <div className="w-full h-px mb-4" style={{ backgroundColor: colors.border }} />
           <p className="text-xs italic text-center" style={{ color: colors.textSecondary, fontFamily: fonts.body }}>
             &ldquo;{config.quote}&rdquo;
+          </p>
+        </div>
+      )}
+
+      {config.enabledComponents.qrCode && (
+        <div className="mt-4 flex items-center gap-3">
+          <QRCodeCard url={data.user.html_url} theme={theme} size={48} />
+          <p className="text-[10px]" style={{ color: colors.textSecondary, fontFamily: fonts.mono }}>
+            {data.user.html_url.replace("https://", "")}
           </p>
         </div>
       )}
@@ -217,6 +256,31 @@ function VintageCard({ data, theme, config }: { data: GitHubData; theme: Theme; 
             $ ls ~/.languages
           </p>
           <TechStack languages={data.languages} theme={theme} />
+        </div>
+      )}
+
+      {config.enabledComponents.badges && (
+        <div className="mb-4">
+          <p className="font-mono text-[10px] mb-1" style={{ color: colors.textSecondary }}>
+            $ cat achievements.txt
+          </p>
+          <Badges stats={data.stats} theme={theme} />
+        </div>
+      )}
+
+      {config.enabledComponents.quote && (
+        <div className="mb-4">
+          <p className="font-mono text-[10px] mb-1" style={{ color: colors.textSecondary }}>$ echo $MOTTO</p>
+          <p className="text-xs italic font-mono" style={{ color: colors.primary }}>&ldquo;{config.quote}&rdquo;</p>
+        </div>
+      )}
+
+      {config.enabledComponents.qrCode && (
+        <div className="flex items-center gap-3 mb-4">
+          <QRCodeCard url={data.user.html_url} theme={theme} size={48} />
+          <p className="font-mono text-[10px]" style={{ color: colors.textSecondary }}>
+            {data.user.html_url.replace("https://", "")}
+          </p>
         </div>
       )}
 
@@ -298,6 +362,33 @@ function GradientCard({ data, theme, config }: { data: GitHubData; theme: Theme;
         )}
       </div>
 
+      {config.enabledComponents.badges && (
+        <div
+          className="relative mt-3 p-3 rounded-2xl backdrop-blur-sm"
+          style={{ backgroundColor: colors.cardBackground, border: `1px solid ${colors.border}` }}
+        >
+          <p className="text-[9px] mb-2 font-semibold uppercase tracking-wider" style={{ color: colors.accent }}>Achievements</p>
+          <Badges stats={data.stats} theme={theme} />
+        </div>
+      )}
+
+      {config.enabledComponents.quote && (
+        <div className="relative mt-3 text-center">
+          <p className="text-xs italic" style={{ color: colors.textSecondary, fontFamily: fonts.body }}>
+            &ldquo;{config.quote}&rdquo;
+          </p>
+        </div>
+      )}
+
+      {config.enabledComponents.qrCode && (
+        <div className="relative mt-3 flex items-center gap-3">
+          <QRCodeCard url={data.user.html_url} theme={theme} size={48} />
+          <p className="text-[10px]" style={{ color: colors.textSecondary, fontFamily: fonts.mono }}>
+            {data.user.html_url.replace("https://", "")}
+          </p>
+        </div>
+      )}
+
       {config.showWatermark && (
         <p className="text-[9px] mt-4 text-center relative" style={{ color: colors.textSecondary, fontFamily: fonts.mono }}>
           codepost.dev
@@ -373,6 +464,37 @@ function PaperCard({ data, theme, config }: { data: GitHubData; theme: Theme; co
           </div>
         )}
       </div>
+
+      {config.enabledComponents.badges && (
+        <div className="mt-4">
+          <p className="text-[10px] font-medium mb-2" style={{ color: colors.textSecondary, fontFamily: fonts.body }}>
+            — Achievements —
+          </p>
+          <Badges stats={data.stats} theme={theme} />
+        </div>
+      )}
+
+      {config.enabledComponents.quote && (
+        <div className="mt-4">
+          <div className="flex justify-center gap-1 mb-2">
+            {"✦✦✦".split("").map((s, i) => (
+              <span key={i} style={{ color: colors.accent, fontSize: "8px" }}>{s}</span>
+            ))}
+          </div>
+          <p className="text-xs italic text-center" style={{ color: colors.textSecondary, fontFamily: fonts.body }}>
+            &ldquo;{config.quote}&rdquo;
+          </p>
+        </div>
+      )}
+
+      {config.enabledComponents.qrCode && (
+        <div className="mt-4 flex items-center gap-3">
+          <QRCodeCard url={data.user.html_url} theme={theme} size={48} />
+          <p className="text-[10px]" style={{ color: colors.textSecondary, fontFamily: fonts.mono }}>
+            {data.user.html_url.replace("https://", "")}
+          </p>
+        </div>
+      )}
 
       {config.showWatermark && (
         <p className="text-[9px] mt-4 text-center" style={{ color: colors.border, fontFamily: fonts.body }}>

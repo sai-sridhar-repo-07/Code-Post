@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
   ActivitySquare,
@@ -32,7 +32,7 @@ const COMPONENTS: {
 ];
 
 export function ComponentToggle() {
-  const { config, toggleComponent } = useCardStore();
+  const { config, toggleComponent, setQuote } = useCardStore();
 
   return (
     <div className="space-y-3">
@@ -68,6 +68,34 @@ export function ComponentToggle() {
           );
         })}
       </div>
+
+      <AnimatePresence>
+        {config.enabledComponents.quote && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-1 space-y-1.5">
+              <label className="text-[10px] text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Quote size={10} className="text-blue-400" />
+                Developer Mantra
+              </label>
+              <textarea
+                value={config.quote}
+                onChange={(e) => setQuote(e.target.value)}
+                rows={2}
+                maxLength={120}
+                placeholder="Code is poetry."
+                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-gray-600 resize-none focus:outline-none focus:border-blue-500/50 focus:bg-blue-500/5 transition-all"
+              />
+              <p className="text-[9px] text-gray-700 text-right">{config.quote.length}/120</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

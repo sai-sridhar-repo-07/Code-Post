@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Download, Share2, Copy, Check, ExternalLink } from "lucide-react";
+import { Download, Share2, Copy, Check, ExternalLink, Save, Globe, Lock } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useCardStore } from "@/lib/store";
 
 async function captureCard(elementId: string): Promise<HTMLCanvasElement> {
@@ -22,8 +23,40 @@ async function captureCard(elementId: string): Promise<HTMLCanvasElement> {
 
 export function ExportPanel() {
   const { config } = useCardStore();
+  const { data: session } = useSession();
   const [exporting, setExporting] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
+
+  const saveCard = async () => {
+    if (!session) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/cards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `${session.user?.name ?? "My"}'s Card`,
+          themeName: config.theme,
+          customColors: config.customColors,
+          enabledComponents: config.enabledComponents,
+          layoutConfig: config.layout,
+          isPublic,
+          quote: config.quote,
+        }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } catch (err) {
+      console.error("Save failed:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const exportAs = async (format: "png" | "jpeg" | "pdf") => {
     setExporting(format);
@@ -84,6 +117,45 @@ export function ExportPanel() {
 
   return (
     <div className="space-y-4">
+      {/* Save to Gallery */}
+      {session && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+            Save Card
+          </h3>
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-white/10 bg-white/5">
+            <div className="flex items-center gap-2 text-xs text-gray-400">
+              {isPublic ? <Globe size={12} className="text-green-400" /> : <Lock size={12} className="text-gray-500" />}
+              <span>{isPublic ? "Public gallery" : "Private"}</span>
+            </div>
+            <button
+              onClick={() => setIsPublic(!isPublic)}
+              className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${isPublic ? "bg-green-500/70" : "bg-white/15"}`}
+            >
+              <div
+                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${isPublic ? "translate-x-4" : "translate-x-0.5"}`}
+              />
+            </button>
+          </div>
+          <motion.button
+            onClick={saveCard}
+            disabled={saving || saved}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-violet-500/30 bg-violet-500/10 hover:bg-violet-500/20 hover:border-violet-500/50 text-xs text-violet-300 hover:text-violet-200 transition-all disabled:opacity-60"
+          >
+            {saving ? (
+              <div className="w-3.5 h-3.5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+            ) : saved ? (
+              <Check size={13} className="text-green-400" />
+            ) : (
+              <Save size={13} />
+            )}
+            {saved ? "Saved to Gallery!" : saving ? "Saving…" : "Save to Gallery"}
+          </motion.button>
+        </div>
+      )}
+
       {/* Download Options */}
       <div className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">

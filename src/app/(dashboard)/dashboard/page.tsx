@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
   RefreshCw, Palette, Layers, Move, Download, Info,
   ChevronLeft, ChevronRight, Zap, GitCommit, Star, GitPullRequest, Flame,
@@ -36,8 +36,8 @@ function LoadingScreen() {
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-xl">
             <Zap size={28} className="text-white" />
           </div>
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500 to-violet-500 blur-lg opacity-50 animate-pulse-glow" />
-          <div className="absolute -inset-3 rounded-3xl border border-violet-500/20 animate-spin-slow" />
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500 to-violet-500 blur-lg opacity-50 animate-pulse" />
+          <div className="absolute -inset-3 rounded-3xl border border-violet-500/20 spin-cw" />
         </div>
         <div className="flex flex-col items-center gap-2">
           <p className="text-white font-medium text-sm">Loading your GitHub data</p>
@@ -57,7 +57,12 @@ function LoadingScreen() {
 }
 
 /* ─── Stat Chip ──────────────────────────────────────────── */
-function StatChip({ label, value, icon: Icon, accent }: { label: string; value: string; icon: React.ElementType; accent: string }) {
+function StatChip({ label, value, icon: Icon, accent }: {
+  label: string;
+  value: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  accent: string;
+}) {
   return (
     <div className="flex flex-col group">
       <div className="flex items-center gap-1 mb-0.5">
@@ -65,6 +70,125 @@ function StatChip({ label, value, icon: Icon, accent }: { label: string; value: 
         <span className="text-[9px] text-gray-600 uppercase tracking-widest">{label}</span>
       </div>
       <span className="text-xs font-bold text-white">{value}</span>
+    </div>
+  );
+}
+
+/* ─── 3D Tilt Card Wrapper ───────────────────────────────── */
+function TiltWrapper({ children, width, height }: {
+  children: React.ReactNode;
+  width: number;
+  height: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const rawX = useMotionValue(0);
+  const rawY = useMotionValue(0);
+  const x = useSpring(rawX, { stiffness: 180, damping: 22 });
+  const y = useSpring(rawY, { stiffness: 180, damping: 22 });
+
+  const rotateX = useTransform(y, [-0.5, 0.5], [10, -10]);
+  const rotateY = useTransform(x, [-0.5, 0.5], [-10, 10]);
+  const brightness = useTransform(y, [-0.5, 0.5], [1.08, 0.94]);
+  const glowX = useTransform(x, [-0.5, 0.5], ["0%", "100%"]);
+  const glowY = useTransform(y, [-0.5, 0.5], ["0%", "100%"]);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    rawX.set((e.clientX - rect.left) / rect.width - 0.5);
+    rawY.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
+  const handleMouseLeave = () => { rawX.set(0); rawY.set(0); };
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        width,
+        height,
+        rotateX,
+        rotateY,
+        filter: useTransform(brightness, (b) => `brightness(${b})`),
+        transformStyle: "preserve-3d",
+        perspective: 900,
+      }}
+      className="relative cursor-pointer"
+    >
+      {/* Dynamic spotlight glow */}
+      <motion.div
+        className="absolute -inset-8 rounded-3xl pointer-events-none z-0 opacity-40"
+        style={{
+          background: useTransform(
+            [glowX, glowY],
+            ([gx, gy]) =>
+              `radial-gradient(ellipse 60% 60% at ${gx} ${gy}, rgba(139,92,246,0.5), rgba(56,189,248,0.3), transparent)`
+          ),
+          filter: "blur(20px)",
+        }}
+      />
+      {children}
+    </motion.div>
+  );
+}
+
+/* ─── Floating 3D background shapes ─────────────────────── */
+function BackgroundShapes() {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {/* Perspective grid floor */}
+      <div
+        className="absolute bottom-0 inset-x-0 h-[60%]"
+        style={{
+          background:
+            "linear-gradient(to bottom, transparent 0%, rgba(139,92,246,0.02) 100%)",
+          backgroundImage:
+            "linear-gradient(rgba(139,92,246,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,.08) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+          transform: "perspective(600px) rotateX(55deg) translateY(20%)",
+          transformOrigin: "50% 100%",
+          maskImage: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 70%)",
+          WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 70%)",
+        }}
+      />
+
+      {/* Floating orbs */}
+      <div className="absolute top-1/4 left-1/6 w-64 h-64 rounded-full opacity-[0.04] blur-[80px] orb-violet orb" />
+      <div className="absolute bottom-1/3 right-1/5 w-80 h-80 rounded-full opacity-[0.03] blur-[100px] orb-blue orb" style={{ animationDelay: "7s" }} />
+      <div className="absolute top-1/2 left-1/2 w-48 h-48 rounded-full opacity-[0.03] blur-[60px] orb-pink orb" style={{ animationDelay: "3s" }} />
+
+      {/* Corner crosshairs */}
+      {[
+        "top-8 left-8 border-t border-l",
+        "top-8 right-8 border-t border-r",
+        "bottom-8 left-8 border-b border-l",
+        "bottom-8 right-8 border-b border-r",
+      ].map((cls) => (
+        <div key={cls} className={`absolute w-6 h-6 ${cls} border-violet-500/20`} />
+      ))}
+
+      {/* Floating mini shapes */}
+      {[
+        { top: "15%", left: "8%",  size: 10, delay: 0 },
+        { top: "70%", left: "5%",  size: 6,  delay: 2 },
+        { top: "25%", right: "7%", size: 8,  delay: 1 },
+        { top: "60%", right: "6%", size: 12, delay: 4 },
+      ].map((s, i) => (
+        <div
+          key={i}
+          className="absolute rounded-sm border border-violet-500/20 float-1"
+          style={{
+            top: s.top,
+            left: "left" in s ? s.left : undefined,
+            right: "right" in s ? s.right : undefined,
+            width: s.size,
+            height: s.size,
+            transform: `rotate(45deg)`,
+            animationDelay: `${s.delay}s`,
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -103,10 +227,7 @@ export default function DashboardPage() {
     setIsSyncing(true);
     try {
       const res = await fetch("/api/github/stats");
-      if (res.ok) {
-        const data = await res.json();
-        setGitHubData(data);
-      }
+      if (res.ok) setGitHubData(await res.json());
     } catch (err) {
       console.error("Failed to fetch stats:", err);
     } finally {
@@ -126,11 +247,10 @@ export default function DashboardPage() {
   if (status === "loading" || (status === "authenticated" && !githubData)) {
     return <LoadingScreen />;
   }
-
   if (!githubData) return null;
 
   const displaySize = EXPORT_SIZES[config.layout.size];
-  const cardWidth = config.layout.width * previewScale;
+  const cardWidth  = config.layout.width  * previewScale;
   const cardHeight = config.layout.height * previewScale;
 
   return (
@@ -144,11 +264,11 @@ export default function DashboardPage() {
           <div className="flex items-center gap-5">
             <StatChip label="Commits" value={formatNumber(githubData.stats.totalCommits)} icon={GitCommit} accent="text-sky-400" />
             <div className="w-px h-6 bg-white/8" />
-            <StatChip label="Stars"   value={formatNumber(githubData.stats.totalStars)}   icon={Star}      accent="text-yellow-400" />
+            <StatChip label="Stars"   value={formatNumber(githubData.stats.totalStars)}   icon={Star}           accent="text-yellow-400" />
             <div className="w-px h-6 bg-white/8" />
             <StatChip label="PRs"     value={formatNumber(githubData.stats.totalPRs)}     icon={GitPullRequest} accent="text-violet-400" />
             <div className="w-px h-6 bg-white/8" />
-            <StatChip label="Streak"  value={`${githubData.stats.currentStreak}d`}        icon={Flame}     accent="text-orange-400" />
+            <StatChip label="Streak"  value={`${githubData.stats.currentStreak}d`}        icon={Flame}          accent="text-orange-400" />
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -175,48 +295,58 @@ export default function DashboardPage() {
         <div
           ref={containerRef}
           className="flex-1 flex items-center justify-center relative overflow-hidden"
-          style={{ background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(139,92,246,0.04) 0%, #05060f 70%)" }}
+          style={{ background: "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(139,92,246,0.05) 0%, #05060f 70%)" }}
         >
-          {/* Grid */}
+          <BackgroundShapes />
+
+          {/* Radial vignette */}
           <div
-            className="absolute inset-0 opacity-[0.025] pointer-events-none"
-            style={{
-              backgroundImage: "linear-gradient(rgba(139,92,246,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.6) 1px, transparent 1px)",
-              backgroundSize: "40px 40px",
-            }}
+            className="absolute inset-0 pointer-events-none z-0"
+            style={{ background: "radial-gradient(ellipse 60% 50% at 50% 50%, transparent 30%, rgba(5,6,15,0.5) 100%)" }}
           />
 
-          {/* Corner crosshairs */}
-          {[
-            "top-8 left-8 border-t border-l",
-            "top-8 right-8 border-t border-r",
-            "bottom-8 left-8 border-b border-l",
-            "bottom-8 right-8 border-b border-r",
-          ].map((cls) => (
-            <div key={cls} className={`absolute w-5 h-5 ${cls} border-white/10`} />
-          ))}
-
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.88, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="relative"
-            style={{ width: cardWidth, height: cardHeight }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-10"
           >
-            {/* Glow beneath card */}
-            <div
-              className="absolute inset-0 rounded-3xl opacity-25 blur-3xl"
-              style={{ background: "linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899)", transform: "scale(0.9) translateY(8%)" }}
-            />
-            {/* Card */}
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/70 ring-1 ring-white/10">
-              <CardCanvas
-                data={githubData}
-                config={config}
-                previewScale={previewScale}
-                id="card-canvas"
+            <TiltWrapper width={cardWidth} height={cardHeight}>
+              {/* Multi-layer glow beneath */}
+              <div
+                className="absolute inset-0 rounded-3xl blur-3xl"
+                style={{
+                  background: "linear-gradient(135deg, rgba(59,130,246,0.4), rgba(139,92,246,0.4), rgba(236,72,153,0.3))",
+                  transform: "scale(0.88) translateY(10%)",
+                }}
               />
-            </div>
+              <div
+                className="absolute inset-0 rounded-3xl blur-xl opacity-60"
+                style={{
+                  background: "linear-gradient(135deg, rgba(59,130,246,0.3), rgba(139,92,246,0.3))",
+                  transform: "scale(0.95) translateY(4%)",
+                }}
+              />
+              {/* Card surface */}
+              <div
+                className="relative rounded-2xl overflow-hidden shadow-3d-lg ring-1 ring-white/10"
+                style={{ transform: "translateZ(0)" }}
+              >
+                <CardCanvas
+                  data={githubData}
+                  config={config}
+                  previewScale={previewScale}
+                  id="card-canvas"
+                />
+              </div>
+              {/* Top specular shine */}
+              <div
+                className="absolute inset-x-0 top-0 h-1/3 rounded-t-2xl pointer-events-none"
+                style={{
+                  background: "linear-gradient(to bottom, rgba(255,255,255,0.06), transparent)",
+                }}
+              />
+            </TiltWrapper>
           </motion.div>
         </div>
       </div>
@@ -226,8 +356,12 @@ export default function DashboardPage() {
         <motion.div
           animate={{ width: panelOpen ? 292 : 48 }}
           transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="relative flex flex-col border-l border-white/8 bg-[#07081a] overflow-hidden"
+          className="relative flex flex-col border-l border-white/8 overflow-hidden"
+          style={{ background: "linear-gradient(180deg, #07081a 0%, #050613 100%)" }}
         >
+          {/* Subtle gradient top edge */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
+
           {/* Toggle button */}
           <motion.button
             onClick={() => setPanelOpen(!panelOpen)}
@@ -252,9 +386,7 @@ export default function DashboardPage() {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`relative flex-1 flex flex-col items-center gap-1 py-3 text-[9px] font-semibold uppercase tracking-widest transition-all ${
-                      activeTab === tab.id
-                        ? "text-violet-300"
-                        : "text-gray-600 hover:text-gray-400"
+                      activeTab === tab.id ? "text-violet-300" : "text-gray-600 hover:text-gray-400"
                     }`}
                   >
                     {activeTab === tab.id && (

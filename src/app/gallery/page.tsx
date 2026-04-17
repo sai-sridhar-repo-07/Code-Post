@@ -5,7 +5,7 @@ import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-mo
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Heart, Eye, ExternalLink, Filter, Sparkles, TrendingUp } from "lucide-react";
+import { Heart, Eye, ExternalLink, Filter, Sparkles, TrendingUp, Search, X } from "lucide-react";
 import { themeList } from "@/lib/themes";
 import { formatNumber, timeAgo } from "@/lib/utils";
 import type { ThemeName } from "@/types";
@@ -68,9 +68,9 @@ function GalleryCard3D({ card, index, onLike }: { card: GalleryCard; index: numb
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: index * 0.06, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, y: 40, rotateX: -12, scale: 0.93 }}
+      animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+      transition={{ delay: index * 0.06, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{ rotateX, rotateY, transformStyle: "preserve-3d", perspective: 800 }}
@@ -83,7 +83,8 @@ function GalleryCard3D({ card, index, onLike }: { card: GalleryCard; index: numb
       />
 
       {/* Card body */}
-      <div className="relative rounded-2xl overflow-hidden border border-white/8 glass-card group-hover:border-white/20 transition-all duration-300">
+      <div className="relative rounded-2xl overflow-hidden border border-white/8 group-hover:border-white/20 transition-all duration-300 shadow-3d-md group-hover:shadow-3d-lg"
+        style={{ background: "rgba(7,8,26,0.85)", backdropFilter: "blur(16px)" }}>
         {/* Preview area */}
         <div
           className="w-full h-48 relative overflow-hidden"
@@ -218,6 +219,8 @@ export default function GalleryPage() {
   const [themeFilter, setThemeFilter] = useState<ThemeName | "all">("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
 
   useEffect(() => {
     const fetchCards = async () => {
@@ -225,6 +228,7 @@ export default function GalleryPage() {
       try {
         const params = new URLSearchParams({ page: String(page) });
         if (themeFilter !== "all") params.set("theme", themeFilter);
+        if (search) params.set("search", search);
         const res = await fetch(`/api/gallery?${params}`);
         if (res.ok) {
           const data = await res.json();
@@ -236,7 +240,19 @@ export default function GalleryPage() {
       }
     };
     fetchCards();
-  }, [page, themeFilter]);
+  }, [page, themeFilter, search]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearch(searchInput);
+    setPage(1);
+  };
+
+  const clearSearch = () => {
+    setSearchInput("");
+    setSearch("");
+    setPage(1);
+  };
 
   const toggleLike = async (cardId: string) => {
     if (!session) return;
@@ -256,18 +272,39 @@ export default function GalleryPage() {
   return (
     <div className="min-h-screen bg-[#05060f] text-white pt-20">
       {/* Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute -top-80 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.05] blur-[120px]"
-          style={{ background: "radial-gradient(circle, #8b5cf6, transparent)" }} />
-        <div className="absolute top-1/3 -right-40 w-[500px] h-[500px] rounded-full opacity-[0.04] blur-[100px]"
-          style={{ background: "radial-gradient(circle, #0ea5e9, transparent)" }} />
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {/* Orbs */}
+        <div className="absolute -top-80 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.07] blur-[120px] orb-violet orb" />
+        <div className="absolute top-1/3 -right-40 w-[500px] h-[500px] rounded-full opacity-[0.05] blur-[100px] orb-blue orb" style={{ animationDelay: "8s" }} />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full opacity-[0.04] blur-[100px] orb-pink orb" style={{ animationDelay: "4s" }} />
+
+        {/* 3D perspective grid floor */}
         <div
-          className="absolute inset-0 opacity-[0.02]"
+          className="absolute bottom-0 inset-x-0 h-[50%]"
           style={{
-            backgroundImage: "linear-gradient(rgba(139,92,246,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.4) 1px, transparent 1px)",
+            backgroundImage: "linear-gradient(rgba(139,92,246,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,.1) 1px, transparent 1px)",
+            backgroundSize: "60px 60px",
+            transform: "perspective(500px) rotateX(55deg) translateY(30%)",
+            transformOrigin: "50% 100%",
+            maskImage: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)",
+            WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)",
+          }}
+        />
+
+        {/* Flat subtle grid overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.018]"
+          style={{
+            backgroundImage: "linear-gradient(rgba(139,92,246,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.5) 1px, transparent 1px)",
             backgroundSize: "60px 60px",
           }}
         />
+
+        {/* Floating CSS shapes */}
+        <div className="absolute top-[15%] left-[5%] w-4 h-4 border border-violet-500/30 rotate-45 float-1" />
+        <div className="absolute top-[40%] left-[3%] w-2.5 h-2.5 border border-sky-500/30 rounded-full float-2" style={{ animationDelay: "2s" }} />
+        <div className="absolute top-[20%] right-[4%] w-3 h-3 border border-pink-500/25 rotate-45 float-3" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-[55%] right-[6%] w-4 h-4 border border-violet-500/20 float-1" style={{ animationDelay: "3s" }} />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-6 py-12">
@@ -297,6 +334,43 @@ export default function GalleryPage() {
           </p>
         </motion.div>
 
+        {/* Search */}
+        <motion.form
+          onSubmit={handleSearch}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08, duration: 0.6 }}
+          className="flex items-center gap-2 mb-5"
+        >
+          <div className="relative flex-1 max-w-sm">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search by username or name…"
+              className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500/40 focus:bg-white/8 transition-all"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300 transition-colors"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+          <motion.button
+            type="submit"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="px-4 py-2.5 rounded-xl bg-violet-600/80 hover:bg-violet-600 text-white text-sm font-medium transition-colors"
+          >
+            Search
+          </motion.button>
+        </motion.form>
+
         {/* Filters */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -323,6 +397,21 @@ export default function GalleryPage() {
             />
           ))}
         </motion.div>
+
+        {/* Active search tag */}
+        {search && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 mb-5 -mt-6"
+          >
+            <span className="text-xs text-gray-500">Results for</span>
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/15 border border-violet-500/25 text-violet-300 text-xs">
+              &ldquo;{search}&rdquo;
+              <button onClick={clearSearch} className="hover:text-white transition-colors"><X size={10} /></button>
+            </span>
+          </motion.div>
+        )}
 
         {/* Grid */}
         <AnimatePresence mode="wait">
