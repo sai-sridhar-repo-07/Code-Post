@@ -9,8 +9,13 @@ import * as THREE from "three";
 function Stars() {
   const ref = useRef<THREE.Points>(null!);
   const positions = useMemo(() => {
-    const arr = new Float32Array(9000);
-    for (let i = 0; i < 9000; i++) arr[i] = (Math.random() - 0.5) * 100;
+    const count = 3000; // 3000 points × 3 = 9000
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      arr[i * 3]     = (Math.random() - 0.5) * 100;
+      arr[i * 3 + 1] = (Math.random() - 0.5) * 100;
+      arr[i * 3 + 2] = (Math.random() - 0.5) * 100;
+    }
     return arr;
   }, []);
 
@@ -20,7 +25,7 @@ function Stars() {
   });
 
   return (
-    <Points ref={ref} positions={positions} stride={3} frustumCulled>
+    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
       <PointMaterial transparent color="#818cf8" size={0.06} sizeAttenuation depthWrite={false} />
     </Points>
   );
@@ -30,8 +35,13 @@ function Stars() {
 function Stars2() {
   const ref = useRef<THREE.Points>(null!);
   const positions = useMemo(() => {
-    const arr = new Float32Array(4000);
-    for (let i = 0; i < 4000; i++) arr[i] = (Math.random() - 0.5) * 60;
+    const count = 1200; // 1200 points × 3 = 3600, divisible by 3
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      arr[i * 3]     = (Math.random() - 0.5) * 60;
+      arr[i * 3 + 1] = (Math.random() - 0.5) * 60;
+      arr[i * 3 + 2] = (Math.random() - 0.5) * 60;
+    }
     return arr;
   }, []);
 
@@ -41,7 +51,7 @@ function Stars2() {
   });
 
   return (
-    <Points ref={ref} positions={positions} stride={3} frustumCulled>
+    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
       <PointMaterial transparent color="#38bdf8" size={0.04} sizeAttenuation depthWrite={false} opacity={0.6} />
     </Points>
   );
@@ -154,7 +164,7 @@ function AmbientParticles() {
   });
 
   return (
-    <Points ref={ref} positions={positions} stride={3} frustumCulled>
+    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
       <PointMaterial transparent color="#c084fc" size={0.12} sizeAttenuation depthWrite={false} opacity={0.5} />
     </Points>
   );
